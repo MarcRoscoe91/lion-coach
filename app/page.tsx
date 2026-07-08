@@ -3,19 +3,23 @@
 import Image from "next/image";
 import { useEffect, useState } from "react";
 
-import BottomNav from "@/components/navigation/BottomNav";
+import AchievementsCard from "@/components/cards/AchievementsCard";
+import StreakCard from "@/components/cards/StreakCard";
 import XPCard from "@/components/cards/XPCard";
+import BottomNav from "@/components/navigation/BottomNav";
+import { defaultProfile, type UserProfile } from "@/lib/profile";
 import { calculateDailyXP } from "@/lib/xp";
 
 const meals = [
-  { name: "🍳 Breakfast", calories: 493, protein: 46, carbs: 54, fat: 9 },
-  { name: "🍗 Chicken & Rice", calories: 333, protein: 36, carbs: 32, fat: 4 },
-  { name: "🥩 Mince & Rice", calories: 296, protein: 26, carbs: 32, fat: 5 },
-  { name: "🥣 Protein Bowl", calories: 365, protein: 51, carbs: 20, fat: 7 },
-  { name: "🥤 Post Workout", calories: 371, protein: 28, carbs: 55, fat: 4 },
+  { name: "🍳 Breakfast", calories: 493, protein: 46 },
+  { name: "🍗 Chicken & Rice", calories: 333, protein: 36 },
+  { name: "🥩 Mince & Rice", calories: 296, protein: 26 },
+  { name: "🥣 Protein Bowl", calories: 365, protein: 51 },
+  { name: "🥤 Post Workout", calories: 371, protein: 28 },
 ];
 
 export default function Home() {
+  const [profile, setProfile] = useState<UserProfile>(defaultProfile);
   const [weight, setWeight] = useState(81);
   const [steps, setSteps] = useState(0);
   const [loggedMeals, setLoggedMeals] = useState<typeof meals>([]);
@@ -27,10 +31,12 @@ export default function Home() {
   const stepsTarget = 10000;
 
   useEffect(() => {
+    const savedProfile = localStorage.getItem("lion-profile");
     const savedWeight = localStorage.getItem("lion-weight");
     const savedSteps = localStorage.getItem("lion-steps");
     const savedMeals = localStorage.getItem("lion-meals");
 
+    if (savedProfile) setProfile(JSON.parse(savedProfile));
     if (savedWeight) setWeight(Number(savedWeight));
     if (savedSteps) setSteps(Number(savedSteps));
     if (savedMeals) setLoggedMeals(JSON.parse(savedMeals));
@@ -41,10 +47,11 @@ export default function Home() {
   useEffect(() => {
     if (!loaded) return;
 
+    localStorage.setItem("lion-profile", JSON.stringify(profile));
     localStorage.setItem("lion-weight", String(weight));
     localStorage.setItem("lion-steps", String(steps));
     localStorage.setItem("lion-meals", JSON.stringify(loggedMeals));
-  }, [weight, steps, loggedMeals, loaded]);
+  }, [profile, weight, steps, loggedMeals, loaded]);
 
   const totals = loggedMeals.reduce(
     (sum, meal) => ({
@@ -62,14 +69,6 @@ export default function Home() {
   const workoutComplete = false;
   const waterComplete = false;
 
-  const completedMissions = [
-    caloriesComplete,
-    proteinComplete,
-    stepsComplete,
-    workoutComplete,
-    waterComplete,
-  ].filter(Boolean).length;
-
   const dailyXP = calculateDailyXP({
     caloriesComplete,
     proteinComplete,
@@ -78,13 +77,38 @@ export default function Home() {
     waterComplete,
   });
 
-  const lionScore =
-    (caloriesComplete ? 20 : totals.calories > 0 ? 12 : 0) +
-    (proteinComplete ? 20 : totals.protein > 0 ? 12 : 0) +
-    (stepsComplete ? 20 : steps > 0 ? 10 : 0) +
-    (workoutComplete ? 25 : 0) +
-    (waterComplete ? 10 : 0) +
-    5;
+  const completedObjectives = [
+    caloriesComplete,
+    proteinComplete,
+    stepsComplete,
+    workoutComplete,
+    waterComplete,
+  ].filter(Boolean).length;
+
+  function addMeal(meal: (typeof meals)[0]) {
+    setLoggedMeals([...loggedMeals, meal]);
+  }
+
+  function claimXP() {
+    setProfile((current) => ({
+      ...current,
+      xp: current.xp + dailyXP,
+      streak: completedObjectives === 5 ? current.streak + 1 : current.streak,
+      bestStreak:
+        completedObjectives === 5
+          ? Math.max(current.bestStreak, current.streak + 1)
+          : current.bestStreak,
+      perfectDays:
+        completedObjectives === 5
+          ? current.perfectDays + 1
+          : current.perfectDays,
+    }));
+  }
+
+  function resetDay() {
+    setLoggedMeals([]);
+    setSteps(0);
+  }
 
   return (
     <main className="min-h-screen bg-black text-white p-5">
@@ -101,37 +125,91 @@ export default function Home() {
             />
           </div>
 
-          <h1 className="mt-5 text-4xl font-extrabold tracking-tight">
-            Good Morning Marc
+          <p className="mt-5 text-sm uppercase tracking-[0.35em] text-yellow-400">
+            Lion Coach
+          </p>
+
+          <h1 className="mt-3 text-4xl font-extrabold tracking-tight">
+            Good Morning {profile.name}
           </h1>
 
           <p className="mt-2 text-zinc-500">Become The Lion</p>
         </header>
 
-        <XPCard xp={dailyXP} />
+        <XPCard xp={profile.xp + dailyXP} />
 
-        <section className="mt-6 rounded-[2rem] border border-yellow-500/20 bg-yellow-400/10 p-6 text-center">
-          <p className="text-sm uppercase tracking-[0.3em] text-yellow-400">
-            Lion Score
-          </p>
+        <section className="mt-6 rounded-[2rem] border border-zinc-800 bg-zinc-900 p-6">
+          <div className="flex items-center justify-between">
+            <div>
+              <p className="text-sm uppercase tracking-[0.3em] text-yellow-400">
+                Today&apos;s XP
+              </p>
 
-          <p className="mt-4 text-7xl font-black">{lionScore}</p>
+              <h2 className="mt-2 text-4xl font-black">
+                +{dailyXP} XP
+              </h2>
 
-          <p className="mt-2 text-xl font-bold text-yellow-400">
-            {lionScore >= 90 ? "Excellent" : lionScore >= 70 ? "Good" : "Build"}
-          </p>
+              <p className="mt-1 text-zinc-400">
+                {completedObjectives} / 5 objectives complete
+              </p>
+            </div>
 
-          <div className="mt-6 h-3 overflow-hidden rounded-full bg-zinc-800">
-            <div
-              className="h-full rounded-full bg-yellow-400 transition-all duration-500"
-              style={{ width: `${Math.min(100, lionScore)}%` }}
+            <button
+              onClick={claimXP}
+              disabled={dailyXP === 0}
+              className="rounded-2xl bg-yellow-400 px-5 py-3 font-bold text-black disabled:opacity-40"
+            >
+              Claim
+            </button>
+          </div>
+        </section>
+
+        <section className="mt-6 rounded-[2rem] border border-zinc-800 bg-zinc-900 p-6">
+          <h2 className="text-2xl font-bold">Today&apos;s Objectives</h2>
+
+          <div className="mt-4 space-y-3">
+            <ObjectiveRow
+              icon="🎯"
+              label="Stay within calories"
+              xp={50}
+              complete={caloriesComplete}
+            />
+
+            <ObjectiveRow
+              icon="💪"
+              label="Hit protein target"
+              xp={75}
+              complete={proteinComplete}
+            />
+
+            <ObjectiveRow
+              icon="🚶"
+              label="Hit 10,000 steps"
+              xp={50}
+              complete={stepsComplete}
+            />
+
+            <ObjectiveRow
+              icon="🏋️"
+              label="Complete Push Day"
+              xp={150}
+              complete={workoutComplete}
+            />
+
+            <ObjectiveRow
+              icon="💧"
+              label="Drink 3L water"
+              xp={25}
+              complete={waterComplete}
             />
           </div>
-
-          <p className="mt-3 text-sm text-zinc-400">
-            {completedMissions} / 5 missions complete
-          </p>
         </section>
+
+        <StreakCard
+          streak={profile.streak}
+          bestStreak={profile.bestStreak}
+          perfectDays={profile.perfectDays}
+        />
 
         <section className="mt-6 rounded-[2rem] border border-zinc-800 bg-zinc-900 p-6">
           <p className="text-sm text-zinc-400">Current Weight</p>
@@ -212,38 +290,6 @@ export default function Home() {
         </section>
 
         <section className="mt-6 rounded-[2rem] border border-zinc-800 bg-zinc-900 p-6">
-          <h2 className="text-2xl font-bold">Today&apos;s Mission</h2>
-
-          <div className="mt-4 space-y-3">
-            <MissionRow
-              icon="🎯"
-              label="Stay within calories"
-              complete={caloriesComplete}
-            />
-            <MissionRow
-              icon="💪"
-              label="Hit protein target"
-              complete={proteinComplete}
-            />
-            <MissionRow
-              icon="🚶"
-              label="Hit 10,000 steps"
-              complete={stepsComplete}
-            />
-            <MissionRow
-              icon="🏋️"
-              label="Complete Push Day"
-              complete={workoutComplete}
-            />
-            <MissionRow
-              icon="💧"
-              label="Drink 3L water"
-              complete={waterComplete}
-            />
-          </div>
-        </section>
-
-        <section className="mt-6 rounded-[2rem] border border-zinc-800 bg-zinc-900 p-6">
           <h2 className="text-2xl font-bold">Today&apos;s Workout</h2>
 
           <div className="mt-4 rounded-2xl bg-zinc-800 p-4">
@@ -260,8 +306,8 @@ export default function Home() {
           </p>
 
           <p className="mt-4 text-lg leading-8 text-zinc-200">
-            You&apos;re on pace to reach {targetWeight}kg. Today&apos;s focus:
-            hit your protein target, build your steps, and complete Push Day.
+            You&apos;ve got {dailyXP} XP available today. Build your streak,
+            hit your protein, and complete Push Day.
           </p>
         </section>
 
@@ -272,7 +318,7 @@ export default function Home() {
             {meals.map((meal) => (
               <button
                 key={meal.name}
-                onClick={() => setLoggedMeals([...loggedMeals, meal])}
+                onClick={() => addMeal(meal)}
                 className="w-full rounded-2xl bg-zinc-800 p-4 text-left active:scale-[0.98]"
               >
                 <div className="flex justify-between">
@@ -288,11 +334,10 @@ export default function Home() {
           </div>
         </section>
 
+        <AchievementsCard />
+
         <button
-          onClick={() => {
-            setLoggedMeals([]);
-            setSteps(0);
-          }}
+          onClick={resetDay}
           className="mt-6 w-full rounded-2xl bg-yellow-400 py-4 text-lg font-bold text-black active:scale-95"
         >
           Reset Day
@@ -304,20 +349,26 @@ export default function Home() {
   );
 }
 
-function MissionRow({
+function ObjectiveRow({
   icon,
   label,
+  xp,
   complete,
 }: {
   icon: string;
   label: string;
+  xp: number;
   complete: boolean;
 }) {
   return (
     <div className="flex items-center justify-between rounded-2xl bg-zinc-800 p-4">
       <div className="flex items-center gap-3">
         <span className="text-2xl">{icon}</span>
-        <span className="font-semibold">{label}</span>
+
+        <div>
+          <p className="font-semibold">{label}</p>
+          <p className="text-sm text-yellow-400">+{xp} XP</p>
+        </div>
       </div>
 
       <span className={complete ? "text-green-400" : "text-zinc-500"}>
