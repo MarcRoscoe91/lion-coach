@@ -4,37 +4,21 @@ import { useEffect, useState } from "react";
 
 import BottomNav from "@/components/navigation/BottomNav";
 import { savedFoods, type Food } from "@/lib/foods";
-
-type DayRecord = {
-  date: string;
-  weight: number;
-  steps: number;
-  meals: Food[];
-  workoutComplete: boolean;
-  waterComplete: boolean;
-};
-
-type Records = Record<string, DayRecord>;
-
-function getTodayKey() {
-  return new Date().toISOString().split("T")[0];
-}
-
-function createEmptyDay(date: string): DayRecord {
-  return {
-    date,
-    weight: 81,
-    steps: 0,
-    meals: [],
-    workoutComplete: false,
-    waterComplete: false,
-  };
-}
+import {
+  addMealToDay,
+  clearMealsFromDay,
+  getDay,
+  getDateKey,
+  getNutritionTotals,
+  loadDailyRecords,
+  saveDailyRecords,
+  type DailyRecords,
+} from "@/lib/dailyStore";
 
 export default function NutritionPage() {
-  const todayKey = getTodayKey();
+  const todayKey = getDateKey();
 
-  const [records, setRecords] = useState<Records>({});
+  const [records, setRecords] = useState<DailyRecords>({});
   const [loaded, setLoaded] = useState(false);
 
   const calorieTarget = 2250;
@@ -43,55 +27,24 @@ export default function NutritionPage() {
   const fatTarget = 60;
 
   useEffect(() => {
-    const savedRecords = localStorage.getItem("lion-daily-records");
-
-    if (savedRecords) {
-      setRecords(JSON.parse(savedRecords));
-    } else {
-      setRecords({
-        [todayKey]: createEmptyDay(todayKey),
-      });
-    }
-
+    setRecords(loadDailyRecords());
     setLoaded(true);
-  }, [todayKey]);
+  }, []);
 
   useEffect(() => {
     if (!loaded) return;
-
-    localStorage.setItem("lion-daily-records", JSON.stringify(records));
+    saveDailyRecords(records);
   }, [records, loaded]);
 
-  const today = records[todayKey] ?? createEmptyDay(todayKey);
-
-  const totals = today.meals.reduce(
-    (sum, meal) => ({
-      calories: sum.calories + meal.calories,
-      protein: sum.protein + meal.protein,
-      carbs: sum.carbs + meal.carbs,
-      fat: sum.fat + meal.fat,
-    }),
-    { calories: 0, protein: 0, carbs: 0, fat: 0 }
-  );
+  const today = getDay(records, todayKey);
+  const totals = getNutritionTotals(today);
 
   function addFood(food: Food) {
-    setRecords((current) => ({
-      ...current,
-      [todayKey]: {
-        ...(current[todayKey] ?? createEmptyDay(todayKey)),
-        meals: [...(current[todayKey]?.meals ?? []), food],
-      },
-    }));
+    setRecords((current) => addMealToDay(current, todayKey, food));
   }
 
   function clearMeals() {
-    setRecords((current) => ({
-      ...current,
-      [todayKey]: {
-        ...(current[todayKey] ?? createEmptyDay(todayKey)),
-        meals: [],
-      },
-    }));
+    setRecords((current) => clearMealsFromDay(current, todayKey));
   }
 
   return (
@@ -123,9 +76,7 @@ export default function NutritionPage() {
                 Today&apos;s Meals
               </p>
 
-              <h2 className="mt-2 text-2xl font-bold">
-                {today.meals.length} logged
-              </h2>
+              <h2 className="mt-2 text-2xl font-bold">{today.meals.length} logged</h2>
             </div>
 
             <button
@@ -141,10 +92,7 @@ export default function NutritionPage() {
               <p className="text-zinc-500">No meals logged yet.</p>
             ) : (
               today.meals.map((meal, index) => (
-                <div
-                  key={`${meal.id}-${index}`}
-                  className="rounded-2xl bg-zinc-800 p-4"
-                >
+                <div key={`${meal.id}-${index}`} className="rounded-2xl bg-zinc-800 p-4">
                   <div className="flex justify-between">
                     <p className="font-bold">{meal.name}</p>
                     <p className="text-yellow-400">{meal.calories} kcal</p>
@@ -212,9 +160,7 @@ function MacroCard({
     <div className="rounded-3xl border border-zinc-800 bg-zinc-900 p-5">
       <p className="text-sm text-zinc-400">{title}</p>
 
-      <h2 className="mt-2 text-3xl font-black">
-        {current}
-      </h2>
+      <h2 className="mt-2 text-3xl font-black">{current}</h2>
 
       <p className="mt-1 text-sm text-zinc-500">of {target}</p>
 
