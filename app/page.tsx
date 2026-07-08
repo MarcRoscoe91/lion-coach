@@ -1,5 +1,6 @@
 "use client";
 
+import Image from "next/image";
 import { useEffect, useState } from "react";
 
 import BottomNav from "@/components/navigation/BottomNav";
@@ -79,13 +80,14 @@ export default function Home() {
     <main className="min-h-screen bg-black text-white p-5">
       <div className="mx-auto max-w-md pb-32">
         <header className="pt-5 text-center">
-          <div className="mx-auto flex h-24 w-24 items-center justify-center rounded-full border border-yellow-500/30 bg-zinc-950 text-6xl shadow-[0_0_50px_rgba(250,204,21,0.18)]">
-            🦁
-          </div>
-
-          <p className="mt-5 text-xs uppercase tracking-[0.4em] text-yellow-400">
-            Lion Coach
-          </p>
+          <Image
+            src="/logo.png"
+            alt="Lion Coach"
+            width={150}
+            height={150}
+            className="mx-auto drop-shadow-[0_0_35px_rgba(250,204,21,0.25)]"
+            priority
+          />
 
           <h1 className="mt-3 text-4xl font-extrabold tracking-tight">
             Good Morning, Marc
