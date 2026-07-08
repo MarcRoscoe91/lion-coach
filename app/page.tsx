@@ -17,12 +17,12 @@ import StepsCard from "@/components/home/StepsCard";
 import WeightCard from "@/components/home/WeightCard";
 import WorkoutCard from "@/components/home/WorkoutCard";
 
-import { savedFoods } from "@/lib/foods";
+import { defaultFoods } from "@/lib/foods";
 import {
   addMealToDay,
+  getDay,
   getLastSevenDays,
   getNutritionTotals,
-  getDay,
   loadDailyRecords,
   saveDailyRecords,
   updateDay,
@@ -117,7 +117,7 @@ export default function Home() {
   return (
     <main className="min-h-screen bg-black p-5 text-white">
       <div className="mx-auto max-w-md pb-32">
-        <HomeHeader />
+        <HomeHeader selectedDate={selectedDate} />
 
         <DaySelector
           days={lastSevenDays}
@@ -194,7 +194,7 @@ export default function Home() {
         <NutritionActionCard
           onLogBreakfast={() =>
             setRecords((current) =>
-              addMealToDay(current, selectedDate, savedFoods[3])
+              addMealToDay(current, selectedDate, defaultFoods[3])
             )
           }
         />

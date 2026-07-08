@@ -3,7 +3,7 @@
 import { useEffect, useState } from "react";
 
 import BottomNav from "@/components/navigation/BottomNav";
-import { savedFoods, type Food } from "@/lib/foods";
+import { defaultFoods, type Food } from "@/lib/foods";
 import {
   addMealToDay,
   clearMealsFromDay,
@@ -76,7 +76,9 @@ export default function NutritionPage() {
                 Today&apos;s Meals
               </p>
 
-              <h2 className="mt-2 text-2xl font-bold">{today.meals.length} logged</h2>
+              <h2 className="mt-2 text-2xl font-bold">
+                {today.meals.length} logged
+              </h2>
             </div>
 
             <button
@@ -92,14 +94,18 @@ export default function NutritionPage() {
               <p className="text-zinc-500">No meals logged yet.</p>
             ) : (
               today.meals.map((meal, index) => (
-                <div key={`${meal.id}-${index}`} className="rounded-2xl bg-zinc-800 p-4">
+                <div
+                  key={`${meal.id}-${index}`}
+                  className="rounded-2xl bg-zinc-800 p-4"
+                >
                   <div className="flex justify-between">
                     <p className="font-bold">{meal.name}</p>
                     <p className="text-yellow-400">{meal.calories} kcal</p>
                   </div>
 
                   <p className="mt-1 text-sm text-zinc-400">
-                    {meal.protein}g protein • {meal.carbs}g carbs • {meal.fat}g fat
+                    {meal.protein}g protein • {meal.carbs}g carbs •{" "}
+                    {meal.fat}g fat
                   </p>
                 </div>
               ))
@@ -117,7 +123,7 @@ export default function NutritionPage() {
           </div>
 
           <div className="space-y-4">
-            {savedFoods.map((food) => (
+            {defaultFoods.map((food) => (
               <button
                 key={food.id}
                 onClick={() => addFood(food)}
