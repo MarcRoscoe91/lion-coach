@@ -4,6 +4,8 @@ import Image from "next/image";
 import { useEffect, useState } from "react";
 
 import BottomNav from "@/components/navigation/BottomNav";
+import XPCard from "@/components/cards/XPCard";
+import { calculateDailyXP } from "@/lib/xp";
 
 const meals = [
   { name: "🍳 Breakfast", calories: 493, protein: 46, carbs: 54, fat: 9 },
@@ -68,6 +70,14 @@ export default function Home() {
     waterComplete,
   ].filter(Boolean).length;
 
+  const dailyXP = calculateDailyXP({
+    caloriesComplete,
+    proteinComplete,
+    stepsComplete,
+    workoutComplete,
+    waterComplete,
+  });
+
   const lionScore =
     (caloriesComplete ? 20 : totals.calories > 0 ? 12 : 0) +
     (proteinComplete ? 20 : totals.protein > 0 ? 12 : 0) +
@@ -79,24 +89,28 @@ export default function Home() {
   return (
     <main className="min-h-screen bg-black text-white p-5">
       <div className="mx-auto max-w-md pb-32">
-        <header className="pt-5 text-center">
-          <Image
-            src="/logo.png"
-            alt="Lion Coach"
-            width={150}
-            height={150}
-            className="mx-auto drop-shadow-[0_0_35px_rgba(250,204,21,0.25)]"
-            priority
-          />
+        <header className="pt-4 text-center">
+          <div className="mx-auto flex h-28 w-28 items-center justify-center rounded-3xl border border-yellow-500/20 bg-black shadow-[0_0_45px_rgba(250,204,21,0.22)]">
+            <Image
+              src="/logo.png"
+              alt="Lion Coach"
+              width={110}
+              height={110}
+              className="rounded-2xl"
+              priority
+            />
+          </div>
 
-          <h1 className="mt-3 text-4xl font-extrabold tracking-tight">
+          <h1 className="mt-5 text-4xl font-extrabold tracking-tight">
             Good Morning Marc
           </h1>
 
           <p className="mt-2 text-zinc-500">Become The Lion</p>
         </header>
 
-        <section className="mt-8 rounded-[2rem] border border-yellow-500/20 bg-yellow-400/10 p-6 text-center">
+        <XPCard xp={dailyXP} />
+
+        <section className="mt-6 rounded-[2rem] border border-yellow-500/20 bg-yellow-400/10 p-6 text-center">
           <p className="text-sm uppercase tracking-[0.3em] text-yellow-400">
             Lion Score
           </p>
@@ -201,11 +215,31 @@ export default function Home() {
           <h2 className="text-2xl font-bold">Today&apos;s Mission</h2>
 
           <div className="mt-4 space-y-3">
-            <MissionRow icon="🎯" label="Stay within calories" complete={caloriesComplete} />
-            <MissionRow icon="💪" label="Hit protein target" complete={proteinComplete} />
-            <MissionRow icon="🚶" label="Hit 10,000 steps" complete={stepsComplete} />
-            <MissionRow icon="🏋️" label="Complete Push Day" complete={workoutComplete} />
-            <MissionRow icon="💧" label="Drink 3L water" complete={waterComplete} />
+            <MissionRow
+              icon="🎯"
+              label="Stay within calories"
+              complete={caloriesComplete}
+            />
+            <MissionRow
+              icon="💪"
+              label="Hit protein target"
+              complete={proteinComplete}
+            />
+            <MissionRow
+              icon="🚶"
+              label="Hit 10,000 steps"
+              complete={stepsComplete}
+            />
+            <MissionRow
+              icon="🏋️"
+              label="Complete Push Day"
+              complete={workoutComplete}
+            />
+            <MissionRow
+              icon="💧"
+              label="Drink 3L water"
+              complete={waterComplete}
+            />
           </div>
         </section>
 
