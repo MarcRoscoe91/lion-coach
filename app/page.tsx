@@ -18,6 +18,10 @@ const meals = [
   { name: "🥤 Post Workout", calories: 371, protein: 28 },
 ];
 
+function getTodayKey() {
+  return new Date().toISOString().split("T")[0];
+}
+
 export default function Home() {
   const [profile, setProfile] = useState<UserProfile>(defaultProfile);
   const [weight, setWeight] = useState(81);
@@ -29,6 +33,7 @@ export default function Home() {
   const caloriesTarget = 2250;
   const proteinTarget = 210;
   const stepsTarget = 10000;
+  const todayKey = getTodayKey();
 
   useEffect(() => {
     const savedProfile = localStorage.getItem("lion-profile");
@@ -36,7 +41,10 @@ export default function Home() {
     const savedSteps = localStorage.getItem("lion-steps");
     const savedMeals = localStorage.getItem("lion-meals");
 
-    if (savedProfile) setProfile(JSON.parse(savedProfile));
+    if (savedProfile) {
+      setProfile({ ...defaultProfile, ...JSON.parse(savedProfile) });
+    }
+
     if (savedWeight) setWeight(Number(savedWeight));
     if (savedSteps) setSteps(Number(savedSteps));
     if (savedMeals) setLoggedMeals(JSON.parse(savedMeals));
@@ -85,14 +93,20 @@ export default function Home() {
     waterComplete,
   ].filter(Boolean).length;
 
+  const hasClaimedToday = profile.lastXPClaimDate === todayKey;
+  const displayedXP = hasClaimedToday ? profile.xp : profile.xp + dailyXP;
+
   function addMeal(meal: (typeof meals)[0]) {
     setLoggedMeals([...loggedMeals, meal]);
   }
 
   function claimXP() {
+    if (hasClaimedToday || dailyXP === 0) return;
+
     setProfile((current) => ({
       ...current,
       xp: current.xp + dailyXP,
+      lastXPClaimDate: todayKey,
       streak: completedObjectives === 5 ? current.streak + 1 : current.streak,
       bestStreak:
         completedObjectives === 5
@@ -125,29 +139,23 @@ export default function Home() {
             />
           </div>
 
-          <p className="mt-5 text-sm uppercase tracking-[0.35em] text-yellow-400">
-            Lion Coach
-          </p>
-
-          <h1 className="mt-3 text-4xl font-extrabold tracking-tight">
+          <h1 className="mt-5 text-4xl font-extrabold tracking-tight">
             Good Morning {profile.name}
           </h1>
 
           <p className="mt-2 text-zinc-500">Become The Lion</p>
         </header>
 
-        <XPCard xp={profile.xp + dailyXP} />
+        <XPCard xp={displayedXP} />
 
         <section className="mt-6 rounded-[2rem] border border-zinc-800 bg-zinc-900 p-6">
           <div className="flex items-center justify-between">
             <div>
               <p className="text-sm uppercase tracking-[0.3em] text-yellow-400">
-                Today&apos;s XP
+                Today&apos;s Rewards
               </p>
 
-              <h2 className="mt-2 text-4xl font-black">
-                +{dailyXP} XP
-              </h2>
+              <h2 className="mt-2 text-4xl font-black">+{dailyXP} XP</h2>
 
               <p className="mt-1 text-zinc-400">
                 {completedObjectives} / 5 objectives complete
@@ -156,10 +164,10 @@ export default function Home() {
 
             <button
               onClick={claimXP}
-              disabled={dailyXP === 0}
+              disabled={hasClaimedToday || dailyXP === 0}
               className="rounded-2xl bg-yellow-400 px-5 py-3 font-bold text-black disabled:opacity-40"
             >
-              Claim
+              {hasClaimedToday ? "✓ Claimed" : "Claim"}
             </button>
           </div>
         </section>
@@ -168,40 +176,11 @@ export default function Home() {
           <h2 className="text-2xl font-bold">Today&apos;s Objectives</h2>
 
           <div className="mt-4 space-y-3">
-            <ObjectiveRow
-              icon="🎯"
-              label="Stay within calories"
-              xp={50}
-              complete={caloriesComplete}
-            />
-
-            <ObjectiveRow
-              icon="💪"
-              label="Hit protein target"
-              xp={75}
-              complete={proteinComplete}
-            />
-
-            <ObjectiveRow
-              icon="🚶"
-              label="Hit 10,000 steps"
-              xp={50}
-              complete={stepsComplete}
-            />
-
-            <ObjectiveRow
-              icon="🏋️"
-              label="Complete Push Day"
-              xp={150}
-              complete={workoutComplete}
-            />
-
-            <ObjectiveRow
-              icon="💧"
-              label="Drink 3L water"
-              xp={25}
-              complete={waterComplete}
-            />
+            <ObjectiveRow icon="🎯" label="Stay within calories" xp={50} complete={caloriesComplete} />
+            <ObjectiveRow icon="💪" label="Hit protein target" xp={75} complete={proteinComplete} />
+            <ObjectiveRow icon="🚶" label="Hit 10,000 steps" xp={50} complete={stepsComplete} />
+            <ObjectiveRow icon="🏋️" label="Complete Push Day" xp={150} complete={workoutComplete} />
+            <ObjectiveRow icon="💧" label="Drink 3L water" xp={25} complete={waterComplete} />
           </div>
         </section>
 
@@ -306,8 +285,8 @@ export default function Home() {
           </p>
 
           <p className="mt-4 text-lg leading-8 text-zinc-200">
-            You&apos;ve got {dailyXP} XP available today. Build your streak,
-            hit your protein, and complete Push Day.
+            You&apos;ve got {hasClaimedToday ? 0 : dailyXP} XP available today.
+            Build your streak, hit your protein, and complete Push Day.
           </p>
         </section>
 

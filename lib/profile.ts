@@ -4,6 +4,7 @@ export type UserProfile = {
   streak: number;
   bestStreak: number;
   perfectDays: number;
+  lastXPClaimDate: string | null;
 };
 
 export const defaultProfile: UserProfile = {
@@ -12,4 +13,5 @@ export const defaultProfile: UserProfile = {
   streak: 0,
   bestStreak: 0,
   perfectDays: 0,
+  lastXPClaimDate: null,
 };
