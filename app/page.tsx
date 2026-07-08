@@ -51,17 +51,20 @@ export default function Home() {
     { calories: 0, protein: 0, carbs: 0, fat: 0 }
   );
 
-  const lionScore = Math.round(
-    ((totals.calories > 0 ? 25 : 0) +
-      (totals.protein >= 100 ? 25 : totals.protein > 0 ? 15 : 0) +
-      (weight <= 81 ? 25 : 10) +
-      15) 
+  const lionScore = Math.min(
+    100,
+    Math.round(
+      (totals.calories > 0 ? 25 : 0) +
+        (totals.protein >= 100 ? 25 : totals.protein > 0 ? 15 : 0) +
+        (weight <= 81 ? 25 : 10) +
+        15
+    )
   );
 
   return (
     <main className="min-h-screen bg-black text-white p-5">
-      <div className="max-w-md mx-auto pb-32">
-        <header className="text-center pt-4">
+      <div className="mx-auto max-w-md pb-32">
+        <header className="pt-4 text-center">
           <div className="mx-auto flex h-20 w-20 items-center justify-center rounded-full border border-yellow-500/30 bg-zinc-950 text-5xl shadow-2xl">
             🦁
           </div>
@@ -138,10 +141,33 @@ export default function Home() {
           <h2 className="text-2xl font-bold">Nutrition</h2>
 
           <div className="mt-5 space-y-5">
-            <MacroBar label="Calories" value={totals.calories} target={targets.calories} suffix="kcal" />
-            <MacroBar label="Protein" value={totals.protein} target={targets.protein} suffix="g" />
-            <MacroBar label="Carbs" value={totals.carbs} target={targets.carbs} suffix="g" />
-            <MacroBar label="Fats" value={totals.fat} target={targets.fat} suffix="g" />
+            <MacroBar
+              label="Calories"
+              value={totals.calories}
+              target={targets.calories}
+              suffix="kcal"
+            />
+
+            <MacroBar
+              label="Protein"
+              value={totals.protein}
+              target={targets.protein}
+              suffix="g"
+            />
+
+            <MacroBar
+              label="Carbs"
+              value={totals.carbs}
+              target={targets.carbs}
+              suffix="g"
+            />
+
+            <MacroBar
+              label="Fats"
+              value={totals.fat}
+              target={targets.fat}
+              suffix="g"
+            />
           </div>
         </section>
 
@@ -182,8 +208,8 @@ export default function Home() {
                 </div>
 
                 <p className="mt-1 text-sm text-zinc-400">
-                  {meal.calories} kcal • {meal.protein}g protein • {meal.carbs}g
-                  carbs • {meal.fat}g fat
+                  {meal.calories} kcal • {meal.protein}g protein •{" "}
+                  {meal.carbs}g carbs • {meal.fat}g fat
                 </p>
               </button>
             ))}
@@ -249,21 +275,25 @@ function BottomNav() {
           <br />
           Home
         </div>
+
         <div>
           🍽️
           <br />
           Food
         </div>
+
         <div>
           🏋️
           <br />
           Train
         </div>
+
         <div>
           📈
           <br />
           Progress
         </div>
+
         <div>
           ⚙️
           <br />
