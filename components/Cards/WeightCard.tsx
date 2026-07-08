@@ -18,7 +18,6 @@ export default function WeightCard({
       <div className="mt-2 flex items-end justify-between">
         <div>
           <p className="text-6xl font-bold">{weight.toFixed(1)}kg</p>
-
           <p className="mt-2 text-green-400">
             {(weight - targetWeight).toFixed(1)}kg to target
           </p>
@@ -26,7 +25,6 @@ export default function WeightCard({
 
         <div className="text-right">
           <p className="text-sm text-zinc-500">Target</p>
-
           <p className="text-2xl font-bold text-yellow-400">
             {targetWeight}kg
           </p>
@@ -36,14 +34,14 @@ export default function WeightCard({
       <div className="mt-6 flex gap-3">
         <button
           onClick={onDecrease}
-          className="flex-1 rounded-2xl bg-zinc-800 py-4 text-2xl font-bold"
+          className="flex-1 rounded-2xl bg-zinc-800 py-4 text-2xl font-bold active:scale-95"
         >
           -
         </button>
 
         <button
           onClick={onIncrease}
-          className="flex-1 rounded-2xl bg-yellow-400 py-4 text-2xl font-bold text-black"
+          className="flex-1 rounded-2xl bg-yellow-400 py-4 text-2xl font-bold text-black active:scale-95"
         >
           +
         </button>
