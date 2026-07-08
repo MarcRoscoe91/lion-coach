@@ -90,7 +90,7 @@ export default function Home() {
           />
 
           <h1 className="mt-3 text-4xl font-extrabold tracking-tight">
-            Good Morning, Marc
+            Good Morning Marc
           </h1>
 
           <p className="mt-2 text-zinc-500">Become The Lion</p>
