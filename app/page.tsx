@@ -429,26 +429,28 @@ export default function Home() {
         </section>
 
         <section className="mt-6 rounded-[2rem] border border-zinc-800 bg-zinc-900 p-6">
-          <h2 className="text-2xl font-bold">Quick Log Food</h2>
+          <div className="flex items-center justify-between">
+            <div>
+              <p className="text-sm uppercase tracking-[0.3em] text-yellow-400">
+                Nutrition
+              </p>
 
-          <div className="mt-4 space-y-3">
-            {meals.map((meal) => (
-              <button
-                key={meal.name}
-                onClick={() => addMeal(meal)}
-                className="w-full rounded-2xl bg-zinc-800 p-4 text-left active:scale-[0.98]"
-              >
-                <div className="flex justify-between">
-                  <span className="font-bold">{meal.name}</span>
-                  <span className="text-yellow-400">+ Add</span>
-                </div>
+              <h2 className="mt-2 text-2xl font-bold">Log today&apos;s food</h2>
 
-                <p className="mt-1 text-sm text-zinc-400">
-                  {meal.calories} kcal • {meal.protein}g protein
-                </p>
-              </button>
-            ))}
+              <p className="mt-1 text-zinc-400">
+                Track meals to complete calories and protein objectives.
+              </p>
+            </div>
+
+            <div className="text-4xl">🍽️</div>
           </div>
+
+          <button
+            onClick={() => addMeal(meals[0])}
+            className="mt-5 w-full rounded-2xl bg-yellow-400 py-4 text-lg font-bold text-black active:scale-95"
+          >
+            + Log Breakfast
+          </button>
         </section>
 
         <AchievementsCard />
