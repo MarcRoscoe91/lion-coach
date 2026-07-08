@@ -51,9 +51,16 @@ export default function Home() {
     { calories: 0, protein: 0, carbs: 0, fat: 0 }
   );
 
+  const lionScore = Math.round(
+    ((totals.calories > 0 ? 25 : 0) +
+      (totals.protein >= 100 ? 25 : totals.protein > 0 ? 15 : 0) +
+      (weight <= 81 ? 25 : 10) +
+      15) 
+  );
+
   return (
     <main className="min-h-screen bg-black text-white p-5">
-      <div className="max-w-md mx-auto pb-24">
+      <div className="max-w-md mx-auto pb-32">
         <header className="text-center pt-4">
           <div className="mx-auto flex h-20 w-20 items-center justify-center rounded-full border border-yellow-500/30 bg-zinc-950 text-5xl shadow-2xl">
             🦁
@@ -63,10 +70,35 @@ export default function Home() {
             Lion Coach
           </h1>
 
-          <p className="mt-1 text-zinc-500">Performance dashboard</p>
+          <p className="mt-1 text-zinc-500">Fitness command centre</p>
         </header>
 
-        <section className="mt-8 rounded-3xl border border-zinc-800 bg-zinc-900 p-6 shadow-xl">
+        <section className="mt-8 rounded-3xl border border-yellow-500/20 bg-yellow-400/10 p-6">
+          <p className="text-sm text-yellow-400">Lion Score</p>
+
+          <div className="mt-2 flex items-end justify-between">
+            <div>
+              <p className="text-6xl font-bold">{lionScore}</p>
+              <p className="mt-1 text-zinc-400">out of 100</p>
+            </div>
+
+            <div className="text-right">
+              <p className="text-xl font-bold text-yellow-400">
+                {lionScore >= 90 ? "Excellent" : lionScore >= 70 ? "Good" : "Build"}
+              </p>
+              <p className="text-sm text-zinc-500">Today</p>
+            </div>
+          </div>
+
+          <div className="mt-5 h-3 overflow-hidden rounded-full bg-zinc-800">
+            <div
+              className="h-full rounded-full bg-yellow-400 transition-all duration-500"
+              style={{ width: `${lionScore}%` }}
+            />
+          </div>
+        </section>
+
+        <section className="mt-6 rounded-3xl border border-zinc-800 bg-zinc-900 p-6 shadow-xl">
           <p className="text-sm text-zinc-400">Current Weight</p>
 
           <div className="mt-2 flex items-end justify-between">
@@ -106,33 +138,10 @@ export default function Home() {
           <h2 className="text-2xl font-bold">Nutrition</h2>
 
           <div className="mt-5 space-y-5">
-            <MacroBar
-              label="Calories"
-              value={totals.calories}
-              target={targets.calories}
-              suffix="kcal"
-            />
-
-            <MacroBar
-              label="Protein"
-              value={totals.protein}
-              target={targets.protein}
-              suffix="g"
-            />
-
-            <MacroBar
-              label="Carbs"
-              value={totals.carbs}
-              target={targets.carbs}
-              suffix="g"
-            />
-
-            <MacroBar
-              label="Fats"
-              value={totals.fat}
-              target={targets.fat}
-              suffix="g"
-            />
+            <MacroBar label="Calories" value={totals.calories} target={targets.calories} suffix="kcal" />
+            <MacroBar label="Protein" value={totals.protein} target={targets.protein} suffix="g" />
+            <MacroBar label="Carbs" value={totals.carbs} target={targets.carbs} suffix="g" />
+            <MacroBar label="Fats" value={totals.fat} target={targets.fat} suffix="g" />
           </div>
         </section>
 
@@ -148,7 +157,7 @@ export default function Home() {
         </section>
 
         <section className="mt-6 rounded-3xl border border-yellow-500/20 bg-yellow-400/10 p-6">
-          <h2 className="text-2xl font-bold text-yellow-400">AI Coach</h2>
+          <h2 className="text-2xl font-bold text-yellow-400">Coach’s Corner</h2>
 
           <p className="mt-3 leading-7 text-zinc-300">
             You’re set up for a controlled cut from {weight.toFixed(1)}kg to{" "}
@@ -188,6 +197,8 @@ export default function Home() {
           Clear Meals
         </button>
       </div>
+
+      <BottomNav />
     </main>
   );
 }
@@ -226,5 +237,39 @@ function MacroBar({
         {remaining} {suffix} remaining
       </p>
     </div>
+  );
+}
+
+function BottomNav() {
+  return (
+    <nav className="fixed bottom-4 left-1/2 z-50 w-[92%] max-w-md -translate-x-1/2 rounded-3xl border border-zinc-800 bg-zinc-950/90 p-3 backdrop-blur">
+      <div className="grid grid-cols-5 text-center text-xs text-zinc-400">
+        <div className="text-yellow-400">
+          🏠
+          <br />
+          Home
+        </div>
+        <div>
+          🍽️
+          <br />
+          Food
+        </div>
+        <div>
+          🏋️
+          <br />
+          Train
+        </div>
+        <div>
+          📈
+          <br />
+          Progress
+        </div>
+        <div>
+          ⚙️
+          <br />
+          Settings
+        </div>
+      </div>
+    </nav>
   );
 }
