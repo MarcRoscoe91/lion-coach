@@ -1,65 +1,230 @@
-import Image from "next/image";
+"use client";
+
+import { useEffect, useState } from "react";
+
+const meals = [
+  { name: "🍳 Breakfast", calories: 493, protein: 46, carbs: 54, fat: 9 },
+  { name: "🍗 Chicken & Rice", calories: 333, protein: 36, carbs: 32, fat: 4 },
+  { name: "🥩 Mince & Rice", calories: 296, protein: 26, carbs: 32, fat: 5 },
+  { name: "🥣 Protein Bowl", calories: 365, protein: 51, carbs: 20, fat: 7 },
+  { name: "🥤 Post Workout", calories: 371, protein: 28, carbs: 55, fat: 4 },
+];
 
 export default function Home() {
+  const [weight, setWeight] = useState(81);
+  const [loggedMeals, setLoggedMeals] = useState<typeof meals>([]);
+  const [loaded, setLoaded] = useState(false);
+
+  const targetWeight = 75;
+
+  const targets = {
+    calories: 2250,
+    protein: 210,
+    carbs: 220,
+    fat: 60,
+  };
+
+  useEffect(() => {
+    const savedWeight = localStorage.getItem("lion-weight");
+    const savedMeals = localStorage.getItem("lion-meals");
+
+    if (savedWeight) setWeight(Number(savedWeight));
+    if (savedMeals) setLoggedMeals(JSON.parse(savedMeals));
+
+    setLoaded(true);
+  }, []);
+
+  useEffect(() => {
+    if (!loaded) return;
+
+    localStorage.setItem("lion-weight", String(weight));
+    localStorage.setItem("lion-meals", JSON.stringify(loggedMeals));
+  }, [weight, loggedMeals, loaded]);
+
+  const totals = loggedMeals.reduce(
+    (sum, meal) => ({
+      calories: sum.calories + meal.calories,
+      protein: sum.protein + meal.protein,
+      carbs: sum.carbs + meal.carbs,
+      fat: sum.fat + meal.fat,
+    }),
+    { calories: 0, protein: 0, carbs: 0, fat: 0 }
+  );
+
   return (
-    <div className="flex flex-col flex-1 items-center justify-center bg-zinc-50 font-sans dark:bg-black">
-      <main className="flex flex-1 w-full max-w-3xl flex-col items-center justify-between py-32 px-16 bg-white dark:bg-black sm:items-start">
-        <Image
-          className="dark:invert"
-          src="/next.svg"
-          alt="Next.js logo"
-          width={100}
-          height={20}
-          priority
-        />
-        <div className="flex flex-col items-center gap-6 text-center sm:items-start sm:text-left">
-          <h1 className="max-w-xs text-3xl font-semibold leading-10 tracking-tight text-black dark:text-zinc-50">
-            To get started, edit the page.tsx file.
+    <main className="min-h-screen bg-black text-white p-5">
+      <div className="max-w-md mx-auto pb-24">
+        <header className="text-center pt-4">
+          <div className="mx-auto flex h-20 w-20 items-center justify-center rounded-full border border-yellow-500/30 bg-zinc-950 text-5xl shadow-2xl">
+            🦁
+          </div>
+
+          <h1 className="mt-4 text-4xl font-extrabold tracking-tight text-yellow-400">
+            Lion Coach
           </h1>
-          <p className="max-w-md text-lg leading-8 text-zinc-600 dark:text-zinc-400">
-            Looking for a starting point or more instructions? Head over to{" "}
-            <a
-              href="https://vercel.com/templates?framework=next.js&utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-              className="font-medium text-zinc-950 dark:text-zinc-50"
+
+          <p className="mt-1 text-zinc-500">Performance dashboard</p>
+        </header>
+
+        <section className="mt-8 rounded-3xl border border-zinc-800 bg-zinc-900 p-6 shadow-xl">
+          <p className="text-sm text-zinc-400">Current Weight</p>
+
+          <div className="mt-2 flex items-end justify-between">
+            <div>
+              <p className="text-6xl font-bold">{weight.toFixed(1)}kg</p>
+              <p className="mt-2 text-green-400">
+                {(weight - targetWeight).toFixed(1)}kg to target
+              </p>
+            </div>
+
+            <div className="text-right">
+              <p className="text-sm text-zinc-500">Target</p>
+              <p className="text-2xl font-bold text-yellow-400">
+                {targetWeight}kg
+              </p>
+            </div>
+          </div>
+
+          <div className="mt-6 flex gap-3">
+            <button
+              onClick={() => setWeight(Number((weight - 0.1).toFixed(1)))}
+              className="flex-1 rounded-2xl bg-zinc-800 py-4 text-2xl font-bold active:scale-95"
             >
-              Templates
-            </a>{" "}
-            or the{" "}
-            <a
-              href="https://nextjs.org/learn?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-              className="font-medium text-zinc-950 dark:text-zinc-50"
+              -
+            </button>
+
+            <button
+              onClick={() => setWeight(Number((weight + 0.1).toFixed(1)))}
+              className="flex-1 rounded-2xl bg-yellow-400 py-4 text-2xl font-bold text-black active:scale-95"
             >
-              Learning
-            </a>{" "}
-            center.
-          </p>
-        </div>
-        <div className="flex flex-col gap-4 text-base font-medium sm:flex-row">
-          <a
-            className="flex h-12 w-full items-center justify-center gap-2 rounded-full bg-foreground px-5 text-background transition-colors hover:bg-[#383838] dark:hover:bg-[#ccc] md:w-[158px]"
-            href="https://vercel.com/new?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            <Image
-              className="dark:invert"
-              src="/vercel.svg"
-              alt="Vercel logomark"
-              width={16}
-              height={16}
+              +
+            </button>
+          </div>
+        </section>
+
+        <section className="mt-6 rounded-3xl border border-zinc-800 bg-zinc-900 p-6">
+          <h2 className="text-2xl font-bold">Nutrition</h2>
+
+          <div className="mt-5 space-y-5">
+            <MacroBar
+              label="Calories"
+              value={totals.calories}
+              target={targets.calories}
+              suffix="kcal"
             />
-            Deploy Now
-          </a>
-          <a
-            className="flex h-12 w-full items-center justify-center rounded-full border border-solid border-black/[.08] px-5 transition-colors hover:border-transparent hover:bg-black/[.04] dark:border-white/[.145] dark:hover:bg-[#1a1a1a] md:w-[158px]"
-            href="https://nextjs.org/docs?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            Documentation
-          </a>
-        </div>
-      </main>
+
+            <MacroBar
+              label="Protein"
+              value={totals.protein}
+              target={targets.protein}
+              suffix="g"
+            />
+
+            <MacroBar
+              label="Carbs"
+              value={totals.carbs}
+              target={targets.carbs}
+              suffix="g"
+            />
+
+            <MacroBar
+              label="Fats"
+              value={totals.fat}
+              target={targets.fat}
+              suffix="g"
+            />
+          </div>
+        </section>
+
+        <section className="mt-6 rounded-3xl border border-zinc-800 bg-zinc-900 p-6">
+          <h2 className="text-2xl font-bold">Today’s Workout</h2>
+
+          <div className="mt-4 rounded-2xl bg-zinc-800 p-4">
+            <p className="text-xl font-bold">🏋️ Push Day</p>
+            <p className="mt-1 text-sm text-zinc-400">
+              Chest, shoulders, triceps + 30 min cardio
+            </p>
+          </div>
+        </section>
+
+        <section className="mt-6 rounded-3xl border border-yellow-500/20 bg-yellow-400/10 p-6">
+          <h2 className="text-2xl font-bold text-yellow-400">AI Coach</h2>
+
+          <p className="mt-3 leading-7 text-zinc-300">
+            You’re set up for a controlled cut from {weight.toFixed(1)}kg to{" "}
+            {targetWeight}kg. Keep protein high, stay consistent, and aim for
+            around 0.5kg loss per week.
+          </p>
+        </section>
+
+        <section className="mt-6 rounded-3xl border border-zinc-800 bg-zinc-900 p-6">
+          <h2 className="text-2xl font-bold">Add Meal</h2>
+
+          <div className="mt-4 space-y-3">
+            {meals.map((meal) => (
+              <button
+                key={meal.name}
+                onClick={() => setLoggedMeals([...loggedMeals, meal])}
+                className="w-full rounded-2xl bg-zinc-800 p-4 text-left active:scale-[0.98]"
+              >
+                <div className="flex justify-between">
+                  <span className="font-bold">{meal.name}</span>
+                  <span className="text-yellow-400">+ Add</span>
+                </div>
+
+                <p className="mt-1 text-sm text-zinc-400">
+                  {meal.calories} kcal • {meal.protein}g protein • {meal.carbs}g
+                  carbs • {meal.fat}g fat
+                </p>
+              </button>
+            ))}
+          </div>
+        </section>
+
+        <button
+          onClick={() => setLoggedMeals([])}
+          className="mt-6 w-full rounded-2xl bg-yellow-400 py-4 text-lg font-bold text-black active:scale-95"
+        >
+          Clear Meals
+        </button>
+      </div>
+    </main>
+  );
+}
+
+function MacroBar({
+  label,
+  value,
+  target,
+  suffix,
+}: {
+  label: string;
+  value: number;
+  target: number;
+  suffix: string;
+}) {
+  const percent = Math.min(100, (value / target) * 100);
+  const remaining = Math.max(0, target - value);
+
+  return (
+    <div>
+      <div className="flex justify-between">
+        <p className="font-semibold">{label}</p>
+        <p className="text-zinc-400">
+          {value} / {target} {suffix}
+        </p>
+      </div>
+
+      <div className="mt-2 h-3 overflow-hidden rounded-full bg-zinc-800">
+        <div
+          className="h-full rounded-full bg-yellow-400 transition-all duration-500"
+          style={{ width: `${percent}%` }}
+        />
+      </div>
+
+      <p className="mt-1 text-sm text-zinc-500">
+        {remaining} {suffix} remaining
+      </p>
     </div>
   );
 }
