@@ -4,11 +4,16 @@ import { useEffect, useState } from "react";
 
 import BottomNav from "@/components/navigation/BottomNav";
 import {
-  createFoodId,
-  loadSavedFoods,
+  createFood,
+  deleteFood,
+  loadFoods,
   saveFoods,
-  type Food,
-} from "@/lib/foods";
+  sortFoods,
+  toggleFavourite,
+  updateFood,
+  type MealCategory,
+  type SavedFood,
+} from "@/lib/foodStore";
 import {
   addMealToDay,
   clearMealsFromDay,
@@ -20,14 +25,18 @@ import {
   type DailyRecords,
 } from "@/lib/dailyStore";
 
+const categories: MealCategory[] = ["Breakfast", "Lunch", "Dinner", "Snacks"];
+
 export default function NutritionPage() {
   const todayKey = getDateKey();
 
   const [records, setRecords] = useState<DailyRecords>({});
-  const [foods, setFoods] = useState<Food[]>([]);
+  const [foods, setFoods] = useState<SavedFood[]>([]);
   const [loaded, setLoaded] = useState(false);
+  const [editingId, setEditingId] = useState<string | null>(null);
 
   const [mealName, setMealName] = useState("");
+  const [category, setCategory] = useState<MealCategory>("Breakfast");
   const [calories, setCalories] = useState("");
   const [protein, setProtein] = useState("");
   const [carbs, setCarbs] = useState("");
@@ -40,7 +49,7 @@ export default function NutritionPage() {
 
   useEffect(() => {
     setRecords(loadDailyRecords());
-    setFoods(loadSavedFoods());
+    setFoods(loadFoods());
     setLoaded(true);
   }, []);
 
@@ -53,8 +62,19 @@ export default function NutritionPage() {
 
   const today = getDay(records, todayKey);
   const totals = getNutritionTotals(today);
+  const sortedFoods = sortFoods(foods);
 
-  function addFood(food: Food) {
+  function resetForm() {
+    setEditingId(null);
+    setMealName("");
+    setCategory("Breakfast");
+    setCalories("");
+    setProtein("");
+    setCarbs("");
+    setFat("");
+  }
+
+  function addFood(food: SavedFood) {
     setRecords((current) => addMealToDay(current, todayKey, food));
   }
 
@@ -62,29 +82,35 @@ export default function NutritionPage() {
     setRecords((current) => clearMealsFromDay(current, todayKey));
   }
 
-  function createMeal() {
+  function saveMeal() {
     if (!mealName.trim()) return;
 
-    const newFood: Food = {
-      id: createFoodId(mealName),
+    const payload = {
       name: mealName,
       calories: Number(calories) || 0,
       protein: Number(protein) || 0,
       carbs: Number(carbs) || 0,
       fat: Number(fat) || 0,
+      category,
     };
 
-    setFoods((current) => [newFood, ...current]);
+    if (editingId) {
+      setFoods((current) => updateFood(current, editingId, payload));
+    } else {
+      setFoods((current) => [createFood(payload), ...current]);
+    }
 
-    setMealName("");
-    setCalories("");
-    setProtein("");
-    setCarbs("");
-    setFat("");
+    resetForm();
   }
 
-  function deleteMeal(foodId: string) {
-    setFoods((current) => current.filter((food) => food.id !== foodId));
+  function startEditing(food: SavedFood) {
+    setEditingId(food.id);
+    setMealName(food.name);
+    setCategory(food.category ?? "Breakfast");
+    setCalories(String(food.calories));
+    setProtein(String(food.protein));
+    setCarbs(String(food.carbs));
+    setFat(String(food.fat));
   }
 
   return (
@@ -98,7 +124,7 @@ export default function NutritionPage() {
           <h1 className="mt-2 text-4xl font-black">Fuel The Lion</h1>
 
           <p className="mt-2 text-zinc-400">
-            Create meals, log food, and complete your nutrition objectives.
+            Create meals, favourite them, and log food in one tap.
           </p>
         </header>
 
@@ -155,10 +181,12 @@ export default function NutritionPage() {
 
         <section className="mt-8 rounded-[2rem] border border-yellow-500/20 bg-yellow-400/10 p-6">
           <p className="text-sm uppercase tracking-[0.3em] text-yellow-400">
-            Create Meal
+            {editingId ? "Edit Meal" : "Create Meal"}
           </p>
 
-          <h2 className="mt-2 text-2xl font-bold">Add your own meal</h2>
+          <h2 className="mt-2 text-2xl font-bold">
+            {editingId ? "Update your meal" : "Add your own meal"}
+          </h2>
 
           <div className="mt-5 space-y-3">
             <input
@@ -168,46 +196,38 @@ export default function NutritionPage() {
               className="w-full rounded-2xl border border-zinc-800 bg-black p-4 text-white outline-none placeholder:text-zinc-600"
             />
 
+            <select
+              value={category}
+              onChange={(event) => setCategory(event.target.value as MealCategory)}
+              className="w-full rounded-2xl border border-zinc-800 bg-black p-4 text-white outline-none"
+            >
+              {categories.map((item) => (
+                <option key={item}>{item}</option>
+              ))}
+            </select>
+
             <div className="grid grid-cols-2 gap-3">
-              <input
-                value={calories}
-                onChange={(event) => setCalories(event.target.value)}
-                placeholder="Calories"
-                inputMode="numeric"
-                className="rounded-2xl border border-zinc-800 bg-black p-4 text-white outline-none placeholder:text-zinc-600"
-              />
-
-              <input
-                value={protein}
-                onChange={(event) => setProtein(event.target.value)}
-                placeholder="Protein"
-                inputMode="numeric"
-                className="rounded-2xl border border-zinc-800 bg-black p-4 text-white outline-none placeholder:text-zinc-600"
-              />
-
-              <input
-                value={carbs}
-                onChange={(event) => setCarbs(event.target.value)}
-                placeholder="Carbs"
-                inputMode="numeric"
-                className="rounded-2xl border border-zinc-800 bg-black p-4 text-white outline-none placeholder:text-zinc-600"
-              />
-
-              <input
-                value={fat}
-                onChange={(event) => setFat(event.target.value)}
-                placeholder="Fat"
-                inputMode="numeric"
-                className="rounded-2xl border border-zinc-800 bg-black p-4 text-white outline-none placeholder:text-zinc-600"
-              />
+              <input value={calories} onChange={(e) => setCalories(e.target.value)} placeholder="Calories" inputMode="numeric" className="rounded-2xl border border-zinc-800 bg-black p-4 text-white outline-none placeholder:text-zinc-600" />
+              <input value={protein} onChange={(e) => setProtein(e.target.value)} placeholder="Protein" inputMode="numeric" className="rounded-2xl border border-zinc-800 bg-black p-4 text-white outline-none placeholder:text-zinc-600" />
+              <input value={carbs} onChange={(e) => setCarbs(e.target.value)} placeholder="Carbs" inputMode="numeric" className="rounded-2xl border border-zinc-800 bg-black p-4 text-white outline-none placeholder:text-zinc-600" />
+              <input value={fat} onChange={(e) => setFat(e.target.value)} placeholder="Fat" inputMode="numeric" className="rounded-2xl border border-zinc-800 bg-black p-4 text-white outline-none placeholder:text-zinc-600" />
             </div>
 
             <button
-              onClick={createMeal}
+              onClick={saveMeal}
               className="w-full rounded-2xl bg-yellow-400 py-4 font-bold text-black active:scale-95"
             >
-              Save Meal
+              {editingId ? "Save Changes" : "Save Meal"}
             </button>
+
+            {editingId && (
+              <button
+                onClick={resetForm}
+                className="w-full rounded-2xl bg-zinc-800 py-4 font-bold text-zinc-300"
+              >
+                Cancel Edit
+              </button>
+            )}
           </div>
         </section>
 
@@ -221,37 +241,65 @@ export default function NutritionPage() {
           </div>
 
           <div className="space-y-4">
-            {foods.map((food) => (
+            {sortedFoods.map((food) => (
               <div
                 key={food.id}
                 className="rounded-3xl border border-zinc-800 bg-zinc-900 p-5"
               >
-                <div className="flex items-center justify-between gap-4">
+                <div className="flex items-start justify-between gap-4">
                   <button
                     onClick={() => addFood(food)}
                     className="flex-1 text-left active:scale-[0.98]"
                   >
-                    <h3 className="text-xl font-bold">{food.name}</h3>
+                    <h3 className="text-xl font-bold">
+                      {food.favourite ? "⭐ " : ""}
+                      {food.name}
+                    </h3>
 
-                    <p className="mt-1 text-zinc-400">
-                      {food.calories} kcal • {food.protein}g protein
+                    <p className="mt-1 text-sm text-zinc-500">
+                      {food.category ?? "Meal"}
+                    </p>
+
+                    <p className="mt-2 text-zinc-400">
+                      {food.calories} kcal • {food.protein}g protein •{" "}
+                      {food.carbs}g carbs • {food.fat}g fat
                     </p>
                   </button>
 
                   <button
-                    onClick={() => deleteMeal(food.id)}
-                    className="rounded-2xl bg-zinc-800 px-4 py-3 text-sm font-bold text-zinc-400"
+                    onClick={() =>
+                      setFoods((current) => toggleFavourite(current, food.id))
+                    }
+                    className="rounded-2xl bg-zinc-800 px-3 py-2 text-lg"
+                  >
+                    {food.favourite ? "⭐" : "☆"}
+                  </button>
+                </div>
+
+                <div className="mt-4 grid grid-cols-3 gap-3">
+                  <button
+                    onClick={() => addFood(food)}
+                    className="rounded-2xl bg-yellow-400 py-3 font-bold text-black"
+                  >
+                    Log
+                  </button>
+
+                  <button
+                    onClick={() => startEditing(food)}
+                    className="rounded-2xl bg-zinc-800 py-3 font-bold text-zinc-300"
+                  >
+                    Edit
+                  </button>
+
+                  <button
+                    onClick={() =>
+                      setFoods((current) => deleteFood(current, food.id))
+                    }
+                    className="rounded-2xl bg-zinc-800 py-3 font-bold text-zinc-400"
                   >
                     Delete
                   </button>
                 </div>
-
-                <button
-                  onClick={() => addFood(food)}
-                  className="mt-4 w-full rounded-2xl bg-yellow-400 py-3 font-bold text-black active:scale-95"
-                >
-                  + Log Meal
-                </button>
               </div>
             ))}
           </div>
@@ -277,9 +325,7 @@ function MacroCard({
   return (
     <div className="rounded-3xl border border-zinc-800 bg-zinc-900 p-5">
       <p className="text-sm text-zinc-400">{title}</p>
-
       <h2 className="mt-2 text-3xl font-black">{current}</h2>
-
       <p className="mt-1 text-sm text-zinc-500">of {target}</p>
 
       <div className="mt-4 h-3 overflow-hidden rounded-full bg-zinc-800">
