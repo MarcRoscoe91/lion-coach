@@ -57,11 +57,19 @@ export function loadSavedFoods(): Food[] {
 
   if (!saved) return defaultFoods;
 
-  return JSON.parse(saved);
+  try {
+    return JSON.parse(saved);
+  } catch {
+    return defaultFoods;
+  }
 }
 
 export function saveFoods(foods: Food[]) {
   if (typeof window === "undefined") return;
 
   localStorage.setItem("lion-saved-foods", JSON.stringify(foods));
+}
+
+export function createFoodId(name: string) {
+  return `${name.toLowerCase().replace(/[^a-z0-9]+/g, "-")}-${Date.now()}`;
 }

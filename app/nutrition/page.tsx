@@ -3,7 +3,12 @@
 import { useEffect, useState } from "react";
 
 import BottomNav from "@/components/navigation/BottomNav";
-import { defaultFoods, type Food } from "@/lib/foods";
+import {
+  createFoodId,
+  loadSavedFoods,
+  saveFoods,
+  type Food,
+} from "@/lib/foods";
 import {
   addMealToDay,
   clearMealsFromDay,
@@ -19,7 +24,14 @@ export default function NutritionPage() {
   const todayKey = getDateKey();
 
   const [records, setRecords] = useState<DailyRecords>({});
+  const [foods, setFoods] = useState<Food[]>([]);
   const [loaded, setLoaded] = useState(false);
+
+  const [mealName, setMealName] = useState("");
+  const [calories, setCalories] = useState("");
+  const [protein, setProtein] = useState("");
+  const [carbs, setCarbs] = useState("");
+  const [fat, setFat] = useState("");
 
   const calorieTarget = 2250;
   const proteinTarget = 210;
@@ -28,13 +40,16 @@ export default function NutritionPage() {
 
   useEffect(() => {
     setRecords(loadDailyRecords());
+    setFoods(loadSavedFoods());
     setLoaded(true);
   }, []);
 
   useEffect(() => {
     if (!loaded) return;
+
     saveDailyRecords(records);
-  }, [records, loaded]);
+    saveFoods(foods);
+  }, [records, foods, loaded]);
 
   const today = getDay(records, todayKey);
   const totals = getNutritionTotals(today);
@@ -45,6 +60,31 @@ export default function NutritionPage() {
 
   function clearMeals() {
     setRecords((current) => clearMealsFromDay(current, todayKey));
+  }
+
+  function createMeal() {
+    if (!mealName.trim()) return;
+
+    const newFood: Food = {
+      id: createFoodId(mealName),
+      name: mealName,
+      calories: Number(calories) || 0,
+      protein: Number(protein) || 0,
+      carbs: Number(carbs) || 0,
+      fat: Number(fat) || 0,
+    };
+
+    setFoods((current) => [newFood, ...current]);
+
+    setMealName("");
+    setCalories("");
+    setProtein("");
+    setCarbs("");
+    setFat("");
+  }
+
+  function deleteMeal(foodId: string) {
+    setFoods((current) => current.filter((food) => food.id !== foodId));
   }
 
   return (
@@ -58,7 +98,7 @@ export default function NutritionPage() {
           <h1 className="mt-2 text-4xl font-black">Fuel The Lion</h1>
 
           <p className="mt-2 text-zinc-400">
-            Log meals and complete your nutrition objectives.
+            Create meals, log food, and complete your nutrition objectives.
           </p>
         </header>
 
@@ -113,9 +153,67 @@ export default function NutritionPage() {
           </div>
         </section>
 
+        <section className="mt-8 rounded-[2rem] border border-yellow-500/20 bg-yellow-400/10 p-6">
+          <p className="text-sm uppercase tracking-[0.3em] text-yellow-400">
+            Create Meal
+          </p>
+
+          <h2 className="mt-2 text-2xl font-bold">Add your own meal</h2>
+
+          <div className="mt-5 space-y-3">
+            <input
+              value={mealName}
+              onChange={(event) => setMealName(event.target.value)}
+              placeholder="Meal name"
+              className="w-full rounded-2xl border border-zinc-800 bg-black p-4 text-white outline-none placeholder:text-zinc-600"
+            />
+
+            <div className="grid grid-cols-2 gap-3">
+              <input
+                value={calories}
+                onChange={(event) => setCalories(event.target.value)}
+                placeholder="Calories"
+                inputMode="numeric"
+                className="rounded-2xl border border-zinc-800 bg-black p-4 text-white outline-none placeholder:text-zinc-600"
+              />
+
+              <input
+                value={protein}
+                onChange={(event) => setProtein(event.target.value)}
+                placeholder="Protein"
+                inputMode="numeric"
+                className="rounded-2xl border border-zinc-800 bg-black p-4 text-white outline-none placeholder:text-zinc-600"
+              />
+
+              <input
+                value={carbs}
+                onChange={(event) => setCarbs(event.target.value)}
+                placeholder="Carbs"
+                inputMode="numeric"
+                className="rounded-2xl border border-zinc-800 bg-black p-4 text-white outline-none placeholder:text-zinc-600"
+              />
+
+              <input
+                value={fat}
+                onChange={(event) => setFat(event.target.value)}
+                placeholder="Fat"
+                inputMode="numeric"
+                className="rounded-2xl border border-zinc-800 bg-black p-4 text-white outline-none placeholder:text-zinc-600"
+              />
+            </div>
+
+            <button
+              onClick={createMeal}
+              className="w-full rounded-2xl bg-yellow-400 py-4 font-bold text-black active:scale-95"
+            >
+              Save Meal
+            </button>
+          </div>
+        </section>
+
         <section className="mt-8">
           <div className="mb-4 flex items-center justify-between">
-            <h2 className="text-2xl font-black">Saved Foods</h2>
+            <h2 className="text-2xl font-black">My Meals</h2>
 
             <span className="rounded-full bg-yellow-400 px-4 py-2 text-sm font-bold text-black">
               One tap
@@ -123,24 +221,38 @@ export default function NutritionPage() {
           </div>
 
           <div className="space-y-4">
-            {defaultFoods.map((food) => (
-              <button
+            {foods.map((food) => (
+              <div
                 key={food.id}
-                onClick={() => addFood(food)}
-                className="w-full rounded-3xl border border-zinc-800 bg-zinc-900 p-5 text-left active:scale-[0.98]"
+                className="rounded-3xl border border-zinc-800 bg-zinc-900 p-5"
               >
-                <div className="flex items-center justify-between">
-                  <div>
+                <div className="flex items-center justify-between gap-4">
+                  <button
+                    onClick={() => addFood(food)}
+                    className="flex-1 text-left active:scale-[0.98]"
+                  >
                     <h3 className="text-xl font-bold">{food.name}</h3>
 
                     <p className="mt-1 text-zinc-400">
                       {food.calories} kcal • {food.protein}g protein
                     </p>
-                  </div>
+                  </button>
 
-                  <span className="text-3xl text-yellow-400">+</span>
+                  <button
+                    onClick={() => deleteMeal(food.id)}
+                    className="rounded-2xl bg-zinc-800 px-4 py-3 text-sm font-bold text-zinc-400"
+                  >
+                    Delete
+                  </button>
                 </div>
-              </button>
+
+                <button
+                  onClick={() => addFood(food)}
+                  className="mt-4 w-full rounded-2xl bg-yellow-400 py-3 font-bold text-black active:scale-95"
+                >
+                  + Log Meal
+                </button>
+              </div>
             ))}
           </div>
         </section>
