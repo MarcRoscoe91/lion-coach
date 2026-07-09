@@ -4,9 +4,9 @@ export type DayRecord = {
   date: string;
   weight: number;
   steps: number;
+  waterMl: number;
   meals: Food[];
   workoutComplete: boolean;
-  waterComplete: boolean;
 };
 
 export type DailyRecords = Record<string, DayRecord>;
@@ -24,9 +24,9 @@ export function createEmptyDay(date: string): DayRecord {
     date,
     weight: 81,
     steps: 0,
+    waterMl: 0,
     meals: [],
     workoutComplete: false,
-    waterComplete: false,
   };
 }
 
@@ -53,7 +53,10 @@ export function saveDailyRecords(records: DailyRecords) {
 }
 
 export function getDay(records: DailyRecords, date: string): DayRecord {
-  return records[date] ?? createEmptyDay(date);
+  return {
+    ...createEmptyDay(date),
+    ...(records[date] ?? {}),
+  };
 }
 
 export function updateDay(
@@ -64,7 +67,7 @@ export function updateDay(
   return {
     ...records,
     [date]: {
-      ...(records[date] ?? createEmptyDay(date)),
+      ...getDay(records, date),
       ...updates,
     },
   };
