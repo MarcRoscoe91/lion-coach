@@ -11,15 +11,13 @@ import CoachCard from "@/components/home/CoachCard";
 import DailyProgressCard from "@/components/home/DailyProgressCard";
 import DaySelector from "@/components/home/DaySelector";
 import HomeHeader from "@/components/home/HomeHeader";
-import NutritionActionCard from "@/components/home/NutritionActionCard";
 import ObjectivesCard from "@/components/home/ObjectivesCard";
 import StepsCard from "@/components/home/StepsCard";
+import WaterCard from "@/components/home/WaterCard";
 import WeightCard from "@/components/home/WeightCard";
 import WorkoutCard from "@/components/home/WorkoutCard";
 
-import { defaultFoods } from "@/lib/foods";
 import {
-  addMealToDay,
   getDay,
   getLastSevenDays,
   getNutritionTotals,
@@ -42,6 +40,7 @@ export default function Home() {
   const caloriesTarget = 2250;
   const proteinTarget = 210;
   const stepsTarget = 10000;
+  const waterTargetMl = 3000;
 
   useEffect(() => {
     setRecords(loadDailyRecords());
@@ -61,25 +60,28 @@ export default function Home() {
 
   const proteinComplete = totals.protein >= proteinTarget;
   const stepsComplete = selectedRecord.steps >= stepsTarget;
+  const waterComplete = selectedRecord.waterMl >= waterTargetMl;
 
-  const dailyXP = calculateDailyXP({
-    caloriesComplete,
-    proteinComplete,
-    stepsComplete,
-    workoutComplete: selectedRecord.workoutComplete,
-    waterComplete: selectedRecord.waterComplete,
-  });
+ const dailyXP = calculateDailyXP({
+  caloriesComplete,
+  proteinComplete,
+  stepsComplete,
+  workoutComplete: selectedRecord.workoutComplete,
+  waterComplete,
+});
 
   const completedObjectives = [
     caloriesComplete,
     proteinComplete,
     stepsComplete,
     selectedRecord.workoutComplete,
-    selectedRecord.waterComplete,
+    waterComplete,
   ].filter(Boolean).length;
 
   const totalXP = Object.values(records).reduce((total, record) => {
-    const recordTotals = getNutritionTotals(record);
+    const day = getDay(records, record.date);
+    const recordTotals = getNutritionTotals(day);
+    const recordWaterComplete = day.waterMl >= waterTargetMl;
 
     return (
       total +
@@ -88,23 +90,24 @@ export default function Home() {
           recordTotals.calories > 0 &&
           recordTotals.calories <= caloriesTarget,
         proteinComplete: recordTotals.protein >= proteinTarget,
-        stepsComplete: record.steps >= stepsTarget,
-        workoutComplete: record.workoutComplete,
-        waterComplete: record.waterComplete,
+        stepsComplete: day.steps >= stepsTarget,
+        workoutComplete: day.workoutComplete,
+        waterComplete: recordWaterComplete,
       })
     );
   }, 0);
 
   const perfectDays = Object.values(records).filter((record) => {
-    const recordTotals = getNutritionTotals(record);
+    const day = getDay(records, record.date);
+    const recordTotals = getNutritionTotals(day);
 
     const xp = calculateDailyXP({
       caloriesComplete:
         recordTotals.calories > 0 && recordTotals.calories <= caloriesTarget,
       proteinComplete: recordTotals.protein >= proteinTarget,
-      stepsComplete: record.steps >= stepsTarget,
-      workoutComplete: record.workoutComplete,
-      waterComplete: record.waterComplete,
+      stepsComplete: day.steps >= stepsTarget,
+      workoutComplete: day.workoutComplete,
+      waterComplete: day.waterMl >= waterTargetMl,
     });
 
     return xp >= 450;
@@ -137,7 +140,7 @@ export default function Home() {
           proteinComplete={proteinComplete}
           stepsComplete={stepsComplete}
           workoutComplete={selectedRecord.workoutComplete}
-          waterComplete={selectedRecord.waterComplete}
+          waterComplete={waterComplete}
           onToggleWorkout={() =>
             updateSelectedRecord({
               workoutComplete: !selectedRecord.workoutComplete,
@@ -145,7 +148,7 @@ export default function Home() {
           }
           onToggleWater={() =>
             updateSelectedRecord({
-              waterComplete: !selectedRecord.waterComplete,
+              waterMl: Math.min(waterTargetMl, selectedRecord.waterMl + 250),
             })
           }
         />
@@ -187,17 +190,25 @@ export default function Home() {
           }
         />
 
+        <WaterCard
+          waterMl={selectedRecord.waterMl}
+          waterTargetMl={waterTargetMl}
+          waterComplete={waterComplete}
+          onDecrease={() =>
+            updateSelectedRecord({
+              waterMl: Math.max(0, selectedRecord.waterMl - 250),
+            })
+          }
+          onIncrease={() =>
+            updateSelectedRecord({
+              waterMl: selectedRecord.waterMl + 250
+            })
+          }
+        />
+
         <WorkoutCard />
 
         <CoachCard dailyXP={dailyXP} />
-
-        <NutritionActionCard
-          onLogBreakfast={() =>
-            setRecords((current) =>
-              addMealToDay(current, selectedDate, defaultFoods[3])
-            )
-          }
-        />
 
         <AchievementsCard />
       </div>
