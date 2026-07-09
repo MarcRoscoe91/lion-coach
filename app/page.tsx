@@ -3,16 +3,14 @@
 import { useEffect, useMemo, useState } from "react";
 
 import AchievementsCard from "@/components/cards/AchievementsCard";
-import StreakCard from "@/components/cards/StreakCard";
-import XPCard from "@/components/cards/XPCard";
 import BottomNav from "@/components/navigation/BottomNav";
 
 import CoachCard from "@/components/home/CoachCard";
-import DailyProgressCard from "@/components/home/DailyProgressCard";
+import DashboardStats from "@/components/home/DashboardStats";
 import DaySelector from "@/components/home/DaySelector";
-import HomeHeader from "@/components/home/HomeHeader";
-import ObjectivesCard from "@/components/home/ObjectivesCard";
+import HomeHero from "@/components/home/HomeHero";
 import StepsCard from "@/components/home/StepsCard";
+import TodaysHuntCard from "@/components/home/TodaysHuntCard";
 import WaterCard from "@/components/home/WaterCard";
 import WeightCard from "@/components/home/WeightCard";
 import WorkoutCard from "@/components/home/WorkoutCard";
@@ -62,13 +60,13 @@ export default function Home() {
   const stepsComplete = selectedRecord.steps >= stepsTarget;
   const waterComplete = selectedRecord.waterMl >= waterTargetMl;
 
- const dailyXP = calculateDailyXP({
-  caloriesComplete,
-  proteinComplete,
-  stepsComplete,
-  workoutComplete: selectedRecord.workoutComplete,
-  waterComplete,
-});
+  const dailyXP = calculateDailyXP({
+    caloriesComplete,
+    proteinComplete,
+    stepsComplete,
+    workoutComplete: selectedRecord.workoutComplete,
+    waterComplete,
+  });
 
   const completedObjectives = [
     caloriesComplete,
@@ -81,7 +79,6 @@ export default function Home() {
   const totalXP = Object.values(records).reduce((total, record) => {
     const day = getDay(records, record.date);
     const recordTotals = getNutritionTotals(day);
-    const recordWaterComplete = day.waterMl >= waterTargetMl;
 
     return (
       total +
@@ -92,26 +89,10 @@ export default function Home() {
         proteinComplete: recordTotals.protein >= proteinTarget,
         stepsComplete: day.steps >= stepsTarget,
         workoutComplete: day.workoutComplete,
-        waterComplete: recordWaterComplete,
+        waterComplete: day.waterMl >= waterTargetMl,
       })
     );
   }, 0);
-
-  const perfectDays = Object.values(records).filter((record) => {
-    const day = getDay(records, record.date);
-    const recordTotals = getNutritionTotals(day);
-
-    const xp = calculateDailyXP({
-      caloriesComplete:
-        recordTotals.calories > 0 && recordTotals.calories <= caloriesTarget,
-      proteinComplete: recordTotals.protein >= proteinTarget,
-      stepsComplete: day.steps >= stepsTarget,
-      workoutComplete: day.workoutComplete,
-      waterComplete: day.waterMl >= waterTargetMl,
-    });
-
-    return xp >= 450;
-  }).length;
 
   function updateSelectedRecord(updates: Parameters<typeof updateDay>[2]) {
     setRecords((current) => updateDay(current, selectedDate, updates));
@@ -120,7 +101,7 @@ export default function Home() {
   return (
     <main className="min-h-screen bg-black p-5 text-white">
       <div className="mx-auto max-w-md pb-32">
-        <HomeHeader selectedDate={selectedDate} />
+        <HomeHero totalXP={totalXP} selectedDate={selectedDate} />
 
         <DaySelector
           days={lastSevenDays}
@@ -128,35 +109,21 @@ export default function Home() {
           onSelectDate={setSelectedDate}
         />
 
-        <XPCard xp={totalXP} />
-
-        <DailyProgressCard
+        <TodaysHuntCard
           dailyXP={dailyXP}
           completedObjectives={completedObjectives}
-        />
-
-        <ObjectivesCard
           caloriesComplete={caloriesComplete}
           proteinComplete={proteinComplete}
           stepsComplete={stepsComplete}
           workoutComplete={selectedRecord.workoutComplete}
           waterComplete={waterComplete}
-          onToggleWorkout={() =>
-            updateSelectedRecord({
-              workoutComplete: !selectedRecord.workoutComplete,
-            })
-          }
-          onToggleWater={() =>
-            updateSelectedRecord({
-              waterMl: Math.min(waterTargetMl, selectedRecord.waterMl + 250),
-            })
-          }
         />
 
-        <StreakCard
-          streak={perfectDays}
-          bestStreak={perfectDays}
-          perfectDays={perfectDays}
+        <DashboardStats
+          weight={selectedRecord.weight}
+          steps={selectedRecord.steps}
+          waterMl={selectedRecord.waterMl}
+          calories={totals.calories}
         />
 
         <WeightCard
@@ -201,7 +168,7 @@ export default function Home() {
           }
           onIncrease={() =>
             updateSelectedRecord({
-              waterMl: selectedRecord.waterMl + 250
+              waterMl: selectedRecord.waterMl + 250,
             })
           }
         />
