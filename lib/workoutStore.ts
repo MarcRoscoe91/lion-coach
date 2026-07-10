@@ -3,6 +3,7 @@ export type Exercise = {
   name: string;
   sets: number;
   reps: string;
+  restSeconds: number;
 };
 
 export type Workout = {
@@ -32,11 +33,41 @@ export const defaultWorkouts: Workout[] = [
     focus: "Chest, shoulders, triceps",
     xpReward: 150,
     exercises: [
-      { id: "bench-press", name: "Bench Press", sets: 4, reps: "8" },
-      { id: "incline-press", name: "Incline Press", sets: 3, reps: "10" },
-      { id: "shoulder-press", name: "Shoulder Press", sets: 3, reps: "10" },
-      { id: "lateral-raises", name: "Lateral Raises", sets: 4, reps: "12" },
-      { id: "tricep-pushdown", name: "Tricep Pushdown", sets: 3, reps: "12" },
+      {
+        id: "bench-press",
+        name: "Bench Press",
+        sets: 4,
+        reps: "8",
+        restSeconds: 120,
+      },
+      {
+        id: "incline-press",
+        name: "Incline Press",
+        sets: 3,
+        reps: "10",
+        restSeconds: 120,
+      },
+      {
+        id: "shoulder-press",
+        name: "Shoulder Press",
+        sets: 3,
+        reps: "10",
+        restSeconds: 120,
+      },
+      {
+        id: "lateral-raises",
+        name: "Lateral Raises",
+        sets: 4,
+        reps: "12",
+        restSeconds: 90,
+      },
+      {
+        id: "tricep-pushdown",
+        name: "Tricep Pushdown",
+        sets: 3,
+        reps: "12",
+        restSeconds: 90,
+      },
     ],
   },
   {
@@ -45,11 +76,41 @@ export const defaultWorkouts: Workout[] = [
     focus: "Back and biceps",
     xpReward: 150,
     exercises: [
-      { id: "lat-pulldown", name: "Lat Pulldown", sets: 4, reps: "10" },
-      { id: "seated-row", name: "Seated Row", sets: 4, reps: "10" },
-      { id: "single-arm-row", name: "Single Arm Row", sets: 3, reps: "10" },
-      { id: "face-pulls", name: "Face Pulls", sets: 3, reps: "15" },
-      { id: "bicep-curls", name: "Bicep Curls", sets: 3, reps: "12" },
+      {
+        id: "lat-pulldown",
+        name: "Lat Pulldown",
+        sets: 4,
+        reps: "10",
+        restSeconds: 120,
+      },
+      {
+        id: "seated-row",
+        name: "Seated Row",
+        sets: 4,
+        reps: "10",
+        restSeconds: 120,
+      },
+      {
+        id: "single-arm-row",
+        name: "Single Arm Row",
+        sets: 3,
+        reps: "10",
+        restSeconds: 120,
+      },
+      {
+        id: "face-pulls",
+        name: "Face Pulls",
+        sets: 3,
+        reps: "15",
+        restSeconds: 90,
+      },
+      {
+        id: "bicep-curls",
+        name: "Bicep Curls",
+        sets: 3,
+        reps: "12",
+        restSeconds: 90,
+      },
     ],
   },
   {
@@ -58,11 +119,41 @@ export const defaultWorkouts: Workout[] = [
     focus: "Quads, hamstrings, glutes",
     xpReward: 150,
     exercises: [
-      { id: "squat", name: "Squat", sets: 4, reps: "8" },
-      { id: "leg-press", name: "Leg Press", sets: 4, reps: "10" },
-      { id: "rdl", name: "Romanian Deadlift", sets: 3, reps: "10" },
-      { id: "leg-curl", name: "Leg Curl", sets: 3, reps: "12" },
-      { id: "calf-raises", name: "Calf Raises", sets: 4, reps: "15" },
+      {
+        id: "squat",
+        name: "Squat",
+        sets: 4,
+        reps: "8",
+        restSeconds: 150,
+      },
+      {
+        id: "leg-press",
+        name: "Leg Press",
+        sets: 4,
+        reps: "10",
+        restSeconds: 150,
+      },
+      {
+        id: "rdl",
+        name: "Romanian Deadlift",
+        sets: 3,
+        reps: "10",
+        restSeconds: 150,
+      },
+      {
+        id: "leg-curl",
+        name: "Leg Curl",
+        sets: 3,
+        reps: "12",
+        restSeconds: 90,
+      },
+      {
+        id: "calf-raises",
+        name: "Calf Raises",
+        sets: 4,
+        reps: "15",
+        restSeconds: 90,
+      },
     ],
   },
 ];
@@ -77,7 +168,8 @@ export function loadWorkouts(): Workout[] {
   if (!saved) return defaultWorkouts;
 
   try {
-    return JSON.parse(saved);
+    const parsed = JSON.parse(saved) as Workout[];
+    return mergeDefaultWorkouts(parsed);
   } catch {
     return defaultWorkouts;
   }
@@ -89,6 +181,111 @@ export function saveWorkouts(workouts: Workout[]) {
   localStorage.setItem(STORAGE_KEY, JSON.stringify(workouts));
 }
 
+export function createWorkoutId(name: string) {
+  return `${name.toLowerCase().replace(/[^a-z0-9]+/g, "-")}-${Date.now()}`;
+}
+
+export function createExerciseId(name: string) {
+  return `${name.toLowerCase().replace(/[^a-z0-9]+/g, "-")}-${Date.now()}`;
+}
+
 export function createSetId() {
   return `set-${Date.now()}-${Math.random().toString(16).slice(2)}`;
+}
+
+export function createWorkout({
+  name,
+  focus,
+  xpReward,
+}: {
+  name: string;
+  focus: string;
+  xpReward: number;
+}): Workout {
+  return {
+    id: createWorkoutId(name),
+    name,
+    focus,
+    xpReward,
+    exercises: [],
+  };
+}
+
+export function createExercise({
+  name,
+  sets,
+  reps,
+  restSeconds,
+}: {
+  name: string;
+  sets: number;
+  reps: string;
+  restSeconds: number;
+}): Exercise {
+  return {
+    id: createExerciseId(name),
+    name,
+    sets,
+    reps,
+    restSeconds,
+  };
+}
+
+export function addExerciseToWorkout(
+  workouts: Workout[],
+  workoutId: string,
+  exercise: Exercise
+): Workout[] {
+  return workouts.map((workout) =>
+    workout.id === workoutId
+      ? {
+          ...workout,
+          exercises: [...workout.exercises, exercise],
+        }
+      : workout
+  );
+}
+
+export function deleteWorkout(
+  workouts: Workout[],
+  workoutId: string
+): Workout[] {
+  return workouts.filter((workout) => workout.id !== workoutId);
+}
+
+export function deleteExerciseFromWorkout(
+  workouts: Workout[],
+  workoutId: string,
+  exerciseId: string
+): Workout[] {
+  return workouts.map((workout) =>
+    workout.id === workoutId
+      ? {
+          ...workout,
+          exercises: workout.exercises.filter(
+            (exercise) => exercise.id !== exerciseId
+          ),
+        }
+      : workout
+  );
+}
+
+function mergeDefaultWorkouts(savedWorkouts: Workout[]): Workout[] {
+  const normalisedSavedWorkouts = savedWorkouts.map((workout) => ({
+    ...workout,
+    exercises: workout.exercises.map((exercise) => ({
+      ...exercise,
+      restSeconds: exercise.restSeconds ?? 120,
+    })),
+  }));
+
+  const savedIds = new Set(
+    normalisedSavedWorkouts.map((workout) => workout.id)
+  );
+
+  const missingDefaults = defaultWorkouts.filter(
+    (workout) => !savedIds.has(workout.id)
+  );
+
+  return [...normalisedSavedWorkouts, ...missingDefaults];
 }
